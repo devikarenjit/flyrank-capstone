@@ -1,17 +1,11 @@
 # FlyRank Capstone
 
-This repository was created for the FlyRank AI Intern Setup assignment.
+This repository is my capstone project for the FlyRank AI Internship.
 
 ## Tech Stack
 
-- Node.js
+- HTML
+- CSS
+- JavaScript
 - Git
-- Cursor IDE
-
-## Goals
-
-- Learn Git workflow
-- Use Claude Code
-- Follow Conventional Commits
-
-Repository created for the FlyRank AI Internship.
+- Cursor
