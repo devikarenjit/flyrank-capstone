@@ -13,3 +13,5 @@ This repository was created for the FlyRank AI Intern Setup assignment.
 - Learn Git workflow
 - Use Claude Code
 - Follow Conventional Commits
+
+Repository created for the FlyRank AI Internship.
