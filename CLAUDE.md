@@ -8,3 +8,5 @@
 ## Conventions
 - Use Conventional Commits.
 - Keep commits descriptive.
+
+- Keep commits small and descriptive.
