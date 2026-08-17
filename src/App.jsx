@@ -1,8 +1,8 @@
-import ChildProfileForm from "./components/ChildProfileForm";
+import ChildProfileForm from "./ChildProfileForm";
 
 function App() {
   return (
-    <div style={{ padding: "2rem 1rem", background: "#fafaf9", minHeight: "100vh" }}>
+    <div>
       <ChildProfileForm />
     </div>
   );

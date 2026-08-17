@@ -1,276 +1,354 @@
 import { useState } from "react";
-import { User, Phone, HeartPulse, Users, Camera, Check } from "lucide-react";
 import "./ChildProfileForm.css";
 
-const initialState = {
-  photo: null,
-  firstName: "",
-  lastName: "",
+const initialForm = {
+  childName: "",
   dob: "",
   gender: "",
-  bloodGroup: "",
-  allergies: "",
-  medicalNotes: "",
+  profilePhoto: null,
+
+  primaryLanguage: "",
+  additionalLanguages: "",
+  learningLanguage: "",
+
+  communication: "",
+  difficultSounds: "",
+  therapist: "",
+  specialistReferral: "",
+  notes: "",
+
+  animals: "",
+  colors: "",
+  characters: "",
+  songs: "",
+  themes: "",
+
+  headsetName: "",
+  pairing: "",
+  offlineRecording: "",
+
   guardianName: "",
   relationship: "",
-  guardianPhone: "",
-  emergencyName: "",
-  emergencyPhone: "",
+  email: "",
+  phone: "",
+
+  goals: [],
+  additionalGoals: "",
 };
 
-const genders = ["Girl", "Boy", "Prefer not to say"];
-const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"];
-
-function Field({ label, required, error, children }) {
-  return (
-    <label className="cpf-field">
-      <span className="cpf-field-label">
-        {label}
-        {required && <span className="cpf-required"> *</span>}
-      </span>
-      <div className="cpf-field-control">{children}</div>
-      {error && <p className="cpf-error">{error}</p>}
-    </label>
-  );
-}
-
-function SectionHeading({ icon: Icon, title, subtitle }) {
-  return (
-    <div className="cpf-section-heading">
-      <div className="cpf-section-icon">
-        <Icon size={18} />
-      </div>
-      <div>
-        <h2 className="cpf-section-title">{title}</h2>
-        {subtitle && <p className="cpf-section-subtitle">{subtitle}</p>}
-      </div>
-    </div>
-  );
-}
+const goalOptions = [
+  "Pronunciation",
+  "Vocabulary",
+  "Sentence Formation",
+  "Confidence in Speaking",
+  "Storytelling",
+  "Reading Aloud",
+];
 
 export default function ChildProfileForm() {
-  const [form, setForm] = useState(initialState);
-  const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState(initialForm);
 
-  const update = (key) => (e) => {
-    const value = e && e.target ? e.target.value : e;
-    setForm((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
   };
 
-  const handlePhoto = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setForm((prev) => ({ ...prev, photo: reader.result }));
-    reader.readAsDataURL(file);
-  };
-
-  const validate = () => {
-    const next = {};
-    if (!form.firstName.trim()) next.firstName = "First name is required";
-    if (!form.lastName.trim()) next.lastName = "Last name is required";
-    if (!form.dob) next.dob = "Date of birth is required";
-    if (!form.guardianName.trim()) next.guardianName = "Guardian name is required";
-    if (!form.guardianPhone.trim()) next.guardianPhone = "Guardian phone is required";
-    setErrors(next);
-    return Object.keys(next).length === 0;
+  const handleGoalChange = (goal) => {
+    setFormData((prev) => ({
+      ...prev,
+      goals: prev.goals.includes(goal)
+        ? prev.goals.filter((g) => g !== goal)
+        : [...prev.goals, goal],
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) setSubmitted(true);
+    console.log("Child Profile:", formData);
+    alert("Child Profile Saved!");
   };
-
-  const handleReset = () => {
-    setForm(initialState);
-    setErrors({});
-    setSubmitted(false);
-  };
-
-  if (submitted) {
-    return (
-      <div className="cpf-card cpf-success">
-        <div className="cpf-success-icon">
-          <Check size={28} />
-        </div>
-        <h2 className="cpf-success-title">Profile saved</h2>
-        <p className="cpf-success-text">
-          {form.firstName || "The child's"} profile has been recorded.
-        </p>
-        <button onClick={handleReset} className="cpf-btn cpf-btn-secondary">
-          Add another profile
-        </button>
-      </div>
-    );
-  }
 
   return (
-    <div className="cpf-card">
-      <div className="cpf-header">
-        <p className="cpf-eyebrow">Child Registration</p>
-        <h1 className="cpf-title">Child Profile</h1>
-        <p className="cpf-subtitle">
-          Basic details, guardians, and health notes in one place.
-        </p>
-      </div>
+    <div className="container">
+      <h1>🎵 Melodic Voice</h1>
+      <p className="subtitle">Child Profile Form</p>
 
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Basic info */}
-        <section className="cpf-section">
-          <SectionHeading icon={User} title="Basic information" />
-          <div className="cpf-basic-row">
-            <label className="cpf-photo-upload">
-              {form.photo ? (
-                <img src={form.photo} alt="Child" className="cpf-photo-preview" />
-              ) : (
-                <div className="cpf-photo-placeholder">
-                  <Camera size={20} />
-                  <span>Photo</span>
-                </div>
-              )}
-              <input type="file" accept="image/*" onChange={handlePhoto} hidden />
-            </label>
+      <form onSubmit={handleSubmit}>
+        {/* Child Information */}
+        <section className="card">
+          <h2>Child Information</h2>
 
-            <div className="cpf-grid cpf-grid-2">
-              <Field label="First name" required error={errors.firstName}>
+          <label>Child's Full Name</label>
+          <input
+            type="text"
+            name="childName"
+            value={formData.childName}
+            onChange={handleChange}
+            placeholder="Enter full name"
+          />
+
+          <label>Date of Birth</label>
+          <input
+            type="date"
+            name="dob"
+            value={formData.dob}
+            onChange={handleChange}
+          />
+
+          <label>Gender</label>
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+          >
+            <option value="">Select Gender</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Prefer not to say</option>
+          </select>
+
+          <label>Profile Photo</label>
+          <input
+            type="file"
+            name="profilePhoto"
+            accept="image/*"
+            onChange={handleChange}
+          />
+        </section>
+
+        {/* Language */}
+        <section className="card">
+          <h2>Language Information</h2>
+
+          <label>Primary Language</label>
+          <input
+            type="text"
+            name="primaryLanguage"
+            value={formData.primaryLanguage}
+            onChange={handleChange}
+          />
+
+          <label>Additional Languages Spoken</label>
+          <input
+            type="text"
+            name="additionalLanguages"
+            value={formData.additionalLanguages}
+            onChange={handleChange}
+          />
+
+          <label>Preferred Learning Language</label>
+          <input
+            type="text"
+            name="learningLanguage"
+            value={formData.learningLanguage}
+            onChange={handleChange}
+          />
+        </section>
+
+        {/* Speech */}
+        <section className="card">
+          <h2>Speech & Communication</h2>
+
+          <label>Communication Style</label>
+          <select
+            name="communication"
+            value={formData.communication}
+            onChange={handleChange}
+          >
+            <option value="">Select</option>
+            <option>Speaking</option>
+            <option>Single words</option>
+            <option>Short sentences</option>
+            <option>Gestures</option>
+            <option>Other</option>
+          </select>
+
+          <label>Difficult Sounds or Words</label>
+          <textarea
+            name="difficultSounds"
+            value={formData.difficultSounds}
+            onChange={handleChange}
+            rows="3"
+          />
+
+          <label>Speech Therapist</label>
+          <input
+            type="text"
+            name="therapist"
+            value={formData.therapist}
+            onChange={handleChange}
+          />
+
+          <label>Specialist Referral</label>
+          <select
+            name="specialistReferral"
+            value={formData.specialistReferral}
+            onChange={handleChange}
+          >
+            <option value="">Select</option>
+            <option>Referred by a specialist</option>
+            <option>Not referred</option>
+          </select>
+
+          <label>Guardian/Therapist Notes</label>
+          <textarea
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            rows="4"
+          />
+        </section>
+
+        {/* Learning Preferences */}
+        <section className="card">
+          <h2>Learning Preferences</h2>
+
+          <label>Favorite Animals</label>
+          <input
+            type="text"
+            name="animals"
+            value={formData.animals}
+            onChange={handleChange}
+          />
+
+          <label>Favorite Colors</label>
+          <input
+            type="text"
+            name="colors"
+            value={formData.colors}
+            onChange={handleChange}
+          />
+
+          <label>Favorite Characters</label>
+          <input
+            type="text"
+            name="characters"
+            value={formData.characters}
+            onChange={handleChange}
+          />
+
+          <label>Favorite Songs or Rhymes</label>
+          <input
+            type="text"
+            name="songs"
+            value={formData.songs}
+            onChange={handleChange}
+          />
+
+          <label>Favorite Story Themes</label>
+          <input
+            type="text"
+            name="themes"
+            value={formData.themes}
+            onChange={handleChange}
+          />
+        </section>
+
+        {/* Headset */}
+        <section className="card">
+          <h2>Headset Setup</h2>
+
+          <label>Headset Name</label>
+          <input
+            type="text"
+            name="headsetName"
+            value={formData.headsetName}
+            onChange={handleChange}
+          />
+
+          <label>Device Pairing</label>
+          <select
+            name="pairing"
+            value={formData.pairing}
+            onChange={handleChange}
+          >
+            <option value="">Select</option>
+            <option>Connected</option>
+            <option>Not Connected</option>
+          </select>
+
+          <label>Offline Recording</label>
+          <select
+            name="offlineRecording"
+            value={formData.offlineRecording}
+            onChange={handleChange}
+          >
+            <option value="">Select</option>
+            <option>Enabled</option>
+            <option>Disabled</option>
+          </select>
+        </section>
+
+        {/* Parent */}
+        <section className="card">
+          <h2>Parent / Guardian</h2>
+
+          <label>Guardian Name</label>
+          <input
+            type="text"
+            name="guardianName"
+            value={formData.guardianName}
+            onChange={handleChange}
+          />
+
+          <label>Relationship</label>
+          <input
+            type="text"
+            name="relationship"
+            value={formData.relationship}
+            onChange={handleChange}
+          />
+
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+
+          <label>Phone</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+        </section>
+
+        {/* Goals */}
+        <section className="card">
+          <h2>Learning Goals</h2>
+
+          <div className="checkbox-group">
+            {goalOptions.map((goal) => (
+              <label key={goal} className="checkbox-item">
                 <input
-                  className="cpf-input"
-                  value={form.firstName}
-                  onChange={update("firstName")}
-                  placeholder="Ava"
+                  type="checkbox"
+                  checked={formData.goals.includes(goal)}
+                  onChange={() => handleGoalChange(goal)}
                 />
-              </Field>
-              <Field label="Last name" required error={errors.lastName}>
-                <input
-                  className="cpf-input"
-                  value={form.lastName}
-                  onChange={update("lastName")}
-                  placeholder="Menon"
-                />
-              </Field>
-              <Field label="Date of birth" required error={errors.dob}>
-                <input
-                  type="date"
-                  className="cpf-input"
-                  value={form.dob}
-                  onChange={update("dob")}
-                />
-              </Field>
-              <Field label="Gender">
-                <select className="cpf-input" value={form.gender} onChange={update("gender")}>
-                  <option value="">Select</option>
-                  {genders.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+                {goal}
+              </label>
+            ))}
           </div>
+
+          <label>Additional Goals</label>
+          <textarea
+            name="additionalGoals"
+            value={formData.additionalGoals}
+            onChange={handleChange}
+            rows="3"
+          />
         </section>
 
-        {/* Health */}
-        <section className="cpf-section">
-          <SectionHeading icon={HeartPulse} title="Health notes" subtitle="Optional, but helps caregivers" />
-          <div className="cpf-grid cpf-grid-2">
-            <Field label="Blood group">
-              <select className="cpf-input" value={form.bloodGroup} onChange={update("bloodGroup")}>
-                <option value="">Select</option>
-                {bloodGroups.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Allergies">
-              <input
-                className="cpf-input"
-                value={form.allergies}
-                onChange={update("allergies")}
-                placeholder="e.g. peanuts, pollen"
-              />
-            </Field>
-            <div className="cpf-span-2">
-              <Field label="Medical notes">
-                <textarea
-                  className="cpf-input cpf-textarea"
-                  value={form.medicalNotes}
-                  onChange={update("medicalNotes")}
-                  placeholder="Conditions, medications, or anything caregivers should know"
-                />
-              </Field>
-            </div>
-          </div>
-        </section>
-
-        {/* Guardian */}
-        <section className="cpf-section">
-          <SectionHeading icon={Users} title="Parent / guardian" />
-          <div className="cpf-grid cpf-grid-2">
-            <Field label="Full name" required error={errors.guardianName}>
-              <input
-                className="cpf-input"
-                value={form.guardianName}
-                onChange={update("guardianName")}
-                placeholder="Priya Menon"
-              />
-            </Field>
-            <Field label="Relationship to child">
-              <input
-                className="cpf-input"
-                value={form.relationship}
-                onChange={update("relationship")}
-                placeholder="Mother, Father, Guardian"
-              />
-            </Field>
-            <Field label="Phone number" required error={errors.guardianPhone}>
-              <input
-                type="tel"
-                className="cpf-input"
-                value={form.guardianPhone}
-                onChange={update("guardianPhone")}
-                placeholder="+91 98765 43210"
-              />
-            </Field>
-          </div>
-        </section>
-
-        {/* Emergency contact */}
-        <section className="cpf-section">
-          <SectionHeading icon={Phone} title="Emergency contact" subtitle="Someone other than the guardian above" />
-          <div className="cpf-grid cpf-grid-2">
-            <Field label="Full name">
-              <input
-                className="cpf-input"
-                value={form.emergencyName}
-                onChange={update("emergencyName")}
-                placeholder="Optional"
-              />
-            </Field>
-            <Field label="Phone number">
-              <input
-                type="tel"
-                className="cpf-input"
-                value={form.emergencyPhone}
-                onChange={update("emergencyPhone")}
-                placeholder="Optional"
-              />
-            </Field>
-          </div>
-        </section>
-
-        <div className="cpf-actions">
-          <button type="button" onClick={handleReset} className="cpf-btn cpf-btn-ghost">
-            Clear
-          </button>
-          <button type="submit" className="cpf-btn cpf-btn-primary">
-            Save Child Profile
-          </button>
-        </div>
+        <button className="save-btn" type="submit">
+          Save Child Profile
+        </button>
       </form>
     </div>
   );
