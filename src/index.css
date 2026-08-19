@@ -1,3 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4F46E5;
+  --color-secondary: #64748B;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-text: #111827;
+  --radius-card: 1rem;
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
