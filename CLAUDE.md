@@ -11,12 +11,10 @@
 
 - Keep commits small and descriptive.
 
-## FE-04 Project Rules
+## Project Rules Learned
 
-1. Always verify every onboarding step in the browser after making changes instead of assuming the generated code works.
-
-2. Keep JSX tags balanced and properly nested, especially in `StepLayout.jsx`, because mismatched tags can break the entire page.
-
-3. Add validation for required fields before allowing users to continue to the next onboarding step.
-
-4. Make one change at a time and test it before moving to the next fix to make debugging easier.
+1. Verify every Vite import path immediately after creating a new component.
+2. Match every opening JSX tag with its closing tag before running the app.
+3. Test every onboarding step after each change instead of fixing multiple steps at once.
+4. Required form fields must block the Continue button until valid.
+5. Check the browser console after every code change and fix the first error before continuing.
