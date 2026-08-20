@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
 export default function AIChat() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content:
+        "Hello there! 🎶 Welcome to Melodic Voice AI Coach! I'm so thrilled you're here. As your AI Voice Coach, my mission is to turn speech practice into a playful, musical adventure. By blending rhythm, whimsical stories, and simple vocal games, we can help your child build speaking confidence and master tricky sounds—all while having a wonderful time together! To help me create a personalized voice playbook for your little star, could you tell me: 1. How old is your child? 2. What speaking challenges have you noticed? (For example: struggling with sounds like R, S, or Th; speaking softly; rushing words; or feeling shy.) 3. What are a few of their favorite things? (Like dinosaurs, space, animals, or fairy tales.) Once you share a few details, I'll create custom songs, stories, and fun speaking activities just for them! ✨"
+    }
+  ]);
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -14,12 +21,14 @@ export default function AIChat() {
   }, [messages]);
 
   async function sendMessage() {
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
 
-    const updatedMessages = [
-      ...messages,
-      { role: "user", content: input }
-    ];
+    const userMessage = {
+      role: "user",
+      content: input
+    };
+
+    const updatedMessages = [...messages, userMessage];
 
     setMessages(updatedMessages);
     setInput("");
@@ -49,8 +58,9 @@ export default function AIChat() {
       const decoder = new TextDecoder();
 
       let assistantText = "";
+      let buffer = "";
 
-      // Create an empty assistant message that will be updated
+      // Create an empty assistant message that will update while streaming
       setMessages(prev => [
         ...prev,
         { role: "assistant", content: "" }
@@ -61,16 +71,17 @@ export default function AIChat() {
 
         if (done) break;
 
-        const chunk = decoder.decode(value);
+        buffer += decoder.decode(value, { stream: true });
 
-        const lines = chunk
-          .split("\n")
-          .filter(line => line.startsWith("data:"));
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          const json = line.replace("data: ", "").trim();
+          if (!line.startsWith("data:")) continue;
 
-          if (!json) continue;
+          const json = line.slice(5).trim();
+
+          if (!json || json === "done" || json === "[DONE]") continue;
 
           try {
             const data = JSON.parse(json);
@@ -91,7 +102,7 @@ export default function AIChat() {
               return copy;
             });
           } catch (err) {
-            console.error("SSE parse error:", err);
+            console.log("Skipping invalid SSE chunk:", json);
           }
         }
       }
@@ -116,36 +127,42 @@ export default function AIChat() {
   }
 
   return (
-    <div className="chat-container">
-      <div className="messages">
-        {messages.map((msg, i) => (
-          <div key={i} className={msg.role}>
-            {msg.content}
-          </div>
-        ))}
-
-        {loading && (
-          <div className="assistant">
-            Melodic Voice AI is thinking...
-          </div>
-        )}
-
-        <div ref={bottomRef}></div>
+    <div className="chat-page">
+      <div className="chat-header">
+        <h1>Melodic Voice AI Coach</h1>
+        <p>Personalized speech guidance for parents and guardians.</p>
       </div>
 
-      <div className="input-row">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about your child's speech..."
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
+      <div className="chat-container">
+        <div className="messages">
+          {messages.map((msg, index) => (
+            <div key={index} className={msg.role}>
+              {msg.content}
+            </div>
+          ))}
 
-        <button onClick={sendMessage}>Send</button>
+          <div ref={bottomRef}></div>
+        </div>
 
-        {loading && (
-          <button onClick={stopGeneration}>Stop</button>
-        )}
+        <div className="input-row">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="Ask about your child's speech..."
+            disabled={loading}
+          />
+
+          <button onClick={sendMessage} disabled={loading}>
+            Send
+          </button>
+
+          {loading && (
+            <button onClick={stopGeneration}>
+              Stop
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
