@@ -2,23 +2,45 @@ import { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
 export default function AIChat() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hello there! 🎶 Welcome to Melodic Voice AI Coach! I'm so thrilled you're here. As your AI Voice Coach, my mission is to turn speech practice into a playful, musical adventure. By blending rhythm, whimsical stories, and simple vocal games, we can help your child build speaking confidence and master tricky sounds—all while having a wonderful time together! To help me create a personalized voice playbook for your little star, could you tell me: 1. How old is your child? 2. What speaking challenges have you noticed? (For example: struggling with sounds like R, S, or Th; speaking softly; rushing words; or feeling shy.) 3. What are a few of their favorite things? (Like dinosaurs, space, animals, or fairy tales.) Once you share a few details, I'll create custom songs, stories, and fun speaking activities just for them! ✨"
-    }
-  ]);
+  const defaultMessages = [
+  {
+    role: "assistant",
+    content:
+      "Hello there! 🎶 Welcome to Melodic Voice AI Coach! Tell me your child's age, speech challenge, and favorite interests."
+  }
+];
+
+const [messages, setMessages] = useState(() => {
+  const saved = localStorage.getItem("melodic-chat");
+
+  return saved ? JSON.parse(saved) : defaultMessages;
+});
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const bottomRef = useRef(null);
-  const controllerRef = useRef(null);
+  const chatRef = useRef(null);
+const controllerRef = useRef(null);
+const [showJumpButton, setShowJumpButton] = useState(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const container = chatRef.current;
+  if (!container) return;
+
+  const nearBottom =
+    container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+
+  if (nearBottom) {
+    container.scrollTop = container.scrollHeight;
+    setShowJumpButton(false);
+  } else {
+    setShowJumpButton(true);
+  }
+}, [messages]);
+
+  useEffect(() => {
+  localStorage.setItem("melodic-chat", JSON.stringify(messages));
+}, [messages]);
 
   async function sendMessage() {
     if (!input.trim() || loading) return;
@@ -134,15 +156,25 @@ export default function AIChat() {
       </div>
 
       <div className="chat-container">
-        <div className="messages">
-          {messages.map((msg, index) => (
-            <div key={index} className={msg.role}>
-              {msg.content}
-            </div>
-          ))}
+        <div className="messages" ref={chatRef}>
+  {messages.map((msg, index) => (
+    <div key={index} className={msg.role}>
+      {msg.content}
+    </div>
+  ))}
 
-          <div ref={bottomRef}></div>
-        </div>
+  {showJumpButton && (
+    <button
+      className="jump-button"
+      onClick={() => {
+        chatRef.current.scrollTop = chatRef.current.scrollHeight;
+        setShowJumpButton(false);
+      }}
+    >
+      Jump to latest ↓
+    </button>
+  )}
+</div>
 
         <div className="input-row">
           <input
@@ -158,10 +190,18 @@ export default function AIChat() {
           </button>
 
           {loading && (
-            <button onClick={stopGeneration}>
-              Stop
-            </button>
-          )}
+  <>
+    <div className="thinking">
+      <span className="dot"></span>
+      <span className="dot"></span>
+      <span className="dot"></span>
+    </div>
+
+    <button onClick={stopGeneration}>
+      Stop
+    </button>
+  </>
+)}
         </div>
       </div>
     </div>

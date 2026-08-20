@@ -74,3 +74,55 @@
   font-size: 1.2rem;
   color: #64748b;
 }
+
+.messages {
+  position: relative;
+}
+
+.jump-button {
+  position: sticky;
+  bottom: 12px;
+  margin-left: auto;
+  display: block;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #2f6fed;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
