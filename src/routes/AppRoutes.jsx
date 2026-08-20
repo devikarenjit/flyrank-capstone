@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import App from "../App";
 import Navigation from "../components/Navigation";
 import HealthCheck from "../pages/HealthCheck";
+import AIChat from "../pages/AIChat";
 
 function Placeholder({ title }) {
   return (
@@ -20,6 +21,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/child-profile" element={<App />} />
+      <Route path="/aichat" element={<AIChat />} />
       <Route path="/speech-assessment" element={<Placeholder title="Speech Assessment" />} />
       <Route path="/ai-stories" element={<Placeholder title="AI Stories" />} />
       <Route path="/ai-songs" element={<Placeholder title="AI Songs" />} />
