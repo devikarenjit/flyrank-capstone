@@ -178,8 +178,10 @@ export default function AIChat() {
   return (
     <div className="chat-page">
       <div className="chat-header">
-        <h1>Melodic Voice AI Coach</h1>
-        <p>Personalized speech guidance for parents and guardians.</p>
+        <h1 className="chat-title">Melodic Voice AI Coach</h1>
+        <p className="chat-subtitle">
+  Personalized speech guidance for parents and guardians.
+</p>
       </div>
 
       <div className="chat-container">
