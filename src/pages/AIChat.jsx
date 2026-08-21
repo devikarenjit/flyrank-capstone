@@ -1,55 +1,62 @@
 import { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
-export default function AIChat() {
-  const defaultMessages = [
+const DEFAULT_MESSAGES = [
   {
     role: "assistant",
     content:
-      "Hello there! 🎶 Welcome to Melodic Voice AI Coach! Tell me your child's age, speech challenge, and favorite interests."
-  }
+      "Hello there! Welcome to Melodic Voice AI Coach! Tell me your child's age, speech challenge, and favorite interests.",
+  },
 ];
 
-const [messages, setMessages] = useState(() => {
-  const saved = localStorage.getItem("melodic-chat");
+function parseSseEvents(chunkBuffer) {
+  const events = chunkBuffer.split(/\r?\n\r?\n/);
+  const remainder = events.pop() || "";
 
-  return saved ? JSON.parse(saved) : defaultMessages;
-});
+  return { events, remainder };
+}
 
+export default function AIChat() {
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem("melodic-chat");
+    return saved ? JSON.parse(saved) : DEFAULT_MESSAGES;
+  });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showJumpButton, setShowJumpButton] = useState(false);
 
   const chatRef = useRef(null);
-const controllerRef = useRef(null);
-const [showJumpButton, setShowJumpButton] = useState(false);
+  const controllerRef = useRef(null);
 
   useEffect(() => {
-  const container = chatRef.current;
-  if (!container) return;
+    const container = chatRef.current;
 
-  const nearBottom =
-    container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+    if (!container) return;
 
-  if (nearBottom) {
-    container.scrollTop = container.scrollHeight;
-    setShowJumpButton(false);
-  } else {
-    setShowJumpButton(true);
-  }
-}, [messages]);
+    const nearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+
+    if (nearBottom) {
+      container.scrollTop = container.scrollHeight;
+      setShowJumpButton(false);
+    } else {
+      setShowJumpButton(true);
+    }
+  }, [messages]);
 
   useEffect(() => {
-  localStorage.setItem("melodic-chat", JSON.stringify(messages));
-}, [messages]);
+    localStorage.setItem("melodic-chat", JSON.stringify(messages));
+  }, [messages]);
 
   async function sendMessage() {
-    if (!input.trim() || loading) return;
+    const trimmedInput = input.trim();
+
+    if (!trimmedInput || loading) return;
 
     const userMessage = {
       role: "user",
-      content: input
+      content: trimmedInput,
     };
-
     const updatedMessages = [...messages, userMessage];
 
     setMessages(updatedMessages);
@@ -63,9 +70,9 @@ const [showJumpButton, setShowJumpButton] = useState(false);
         method: "POST",
         signal: controllerRef.current.signal,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ messages: updatedMessages })
+        body: JSON.stringify({ messages: updatedMessages }),
       });
 
       if (!response.ok) {
@@ -78,15 +85,9 @@ const [showJumpButton, setShowJumpButton] = useState(false);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-
       let assistantText = "";
       let buffer = "";
-
-      // Create an empty assistant message that will update while streaming
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: "" }
-      ]);
+      let assistantStarted = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -95,51 +96,77 @@ const [showJumpButton, setShowJumpButton] = useState(false);
 
         buffer += decoder.decode(value, { stream: true });
 
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+        const { events, remainder } = parseSseEvents(buffer);
+        buffer = remainder;
 
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
+        for (const eventChunk of events) {
+          const lines = eventChunk
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
+          const eventName =
+            lines.find((line) => line.startsWith("event:"))?.slice(6).trim() ||
+            "message";
+          const data = lines
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trim())
+            .join("\n");
 
-          const json = line.slice(5).trim();
-
-          if (!json || json === "done" || json === "[DONE]") continue;
-
-          try {
-            const data = JSON.parse(json);
-
-            const text =
-              data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-            if (!text) continue;
-
-            assistantText += text;
-
-            setMessages(prev => {
-              const copy = [...prev];
-              copy[copy.length - 1] = {
-                role: "assistant",
-                content: assistantText
-              };
-              return copy;
-            });
-          } catch (err) {
-            console.log("Skipping invalid SSE chunk:", json);
+          if (!data) {
+            continue;
           }
+
+          const payload = JSON.parse(data);
+
+          if (eventName === "error") {
+            throw new Error(payload.error || "Streaming request failed.");
+          }
+
+          if (eventName === "end" || payload.done) {
+            continue;
+          }
+
+          if (!payload.text) {
+            continue;
+          }
+
+          assistantText += payload.text;
+
+          setMessages((prev) => {
+            const nextMessages = [...prev];
+
+            if (!assistantStarted) {
+              nextMessages.push({
+                role: "assistant",
+                content: assistantText,
+              });
+              assistantStarted = true;
+            } else {
+              nextMessages[nextMessages.length - 1] = {
+                role: "assistant",
+                content: assistantText,
+              };
+            }
+
+            return nextMessages;
+          });
         }
       }
     } catch (error) {
-      console.error(error);
+      if (error.name !== "AbortError") {
+        console.error(error);
 
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, something went wrong while generating a response."
-        }
-      ]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Sorry, something went wrong while generating a response.",
+          },
+        ]);
+      }
     } finally {
       setLoading(false);
+      controllerRef.current = null;
     }
   }
 
@@ -157,24 +184,32 @@ const [showJumpButton, setShowJumpButton] = useState(false);
 
       <div className="chat-container">
         <div className="messages" ref={chatRef}>
-  {messages.map((msg, index) => (
-    <div key={index} className={msg.role}>
-      {msg.content}
-    </div>
-  ))}
+          {messages.map((msg, index) => (
+            <div key={index} className={msg.role}>
+              {msg.content}
+            </div>
+          ))}
 
-  {showJumpButton && (
-    <button
-      className="jump-button"
-      onClick={() => {
-        chatRef.current.scrollTop = chatRef.current.scrollHeight;
-        setShowJumpButton(false);
-      }}
-    >
-      Jump to latest ↓
-    </button>
-  )}
-</div>
+          {loading && messages[messages.length - 1]?.role === "user" && (
+            <div className="assistant thinking">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          )}
+        </div>
+
+        {showJumpButton && (
+          <button
+            className="jump-button"
+            onClick={() => {
+              chatRef.current.scrollTop = chatRef.current.scrollHeight;
+              setShowJumpButton(false);
+            }}
+          >
+            Jump to latest ↓
+          </button>
+        )}
 
         <div className="input-row">
           <input
@@ -189,19 +224,7 @@ const [showJumpButton, setShowJumpButton] = useState(false);
             Send
           </button>
 
-          {loading && (
-  <>
-    <div className="thinking">
-      <span className="dot"></span>
-      <span className="dot"></span>
-      <span className="dot"></span>
-    </div>
-
-    <button onClick={stopGeneration}>
-      Stop
-    </button>
-  </>
-)}
+          {loading && <button onClick={stopGeneration}>Stop</button>}
         </div>
       </div>
     </div>
